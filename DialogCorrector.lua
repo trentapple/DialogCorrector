@@ -43,7 +43,7 @@ function DialogCorrector:HookDialogInteraction()
 
 	ZO_InteractWindowTargetAreaBodyText.SetText = function (self, bodyText)
 		local dialogCorrectorBodyText = bodyText
-		if (INTERACTION_DIALOG_CORRECTOR.enabled) then
+		if (INTERACTION_DIALOG_CORRECTOR.sv.enabled) then
 			dialogCorrectorBodyText = string.gsub(dialogCorrectorBodyText, "\.  ", "\. ")
 		end
 	    dialogCorrectorOriginalSetTextFn(self, dialogCorrectorBodyText)

@@ -1,7 +1,7 @@
-## Title: Dialog Corrector
+﻿## Title: Dialog Corrector
 ## APIVersion: 100021 100022
 ## Description: Tidy up typography inconsistencies in quest dialog content. Enforces the use of only one space after a period at the end of a sentence (instead of both single/double space usage intermixed within the same body of text).
-## Version: 1.0.0
+## Version: 1.0.1
 ## OptionalDependsOn: LibAddonMenu-2.0
 ## SavedVariables: DialogCorrector_SavedVariables
 ## Author: |c0066FFArchitecture|r
