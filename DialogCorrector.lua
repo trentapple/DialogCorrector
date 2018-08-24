@@ -10,7 +10,8 @@ function DialogCorrector:SetupOptions()
 		name = addonDisplayName,
 		displayName = addonDisplayName,
 		author = "|c0066FFArchitecture|r",
-		--version = self.version,
+                website = "http://www.esoui.com/downloads/info1907-DialogCorrector.html",
+		version = "1.1.0",
 		registerForRefresh = true,
 		registerForDefaults = false,
 	}
@@ -21,14 +22,44 @@ function DialogCorrector:SetupOptions()
 			name = "Dialog Interaction Enhancements",
 			width = "full",
 		},
+                {
+                        type = "description",
+                        title = "Fix Spacing Inconsistencies",
+                        text = [[Unfortunately, the typography in quest and NPC dialog has been quite inconsistent. In some places one space is used at the end of a sentence, in others two. Sometimes, this is even inside a single dialog!
+
+This is rather frustrating if you notice that sort of thing, so this addon can correct the problem by enforcing either single or double spacing at the end of a sentence.
+
+Select your preferred style below, and remember: nobody is wrong, we just like different things.
+]],
+                },
 		{
 			type = "checkbox",
-			name = "Fix Spacing Inconsistencies",
-			tooltip = "Automatically replaces any instances of '.<space><space>' with '.<space>' in dialog interaction content.",
-			getFunc = function() return self.sv.enabled end,
-			setFunc = function(value) self.sv.enabled = value if (value) then self:HookDialogInteraction() end end,
+			name = "Enable Typography Correction",
+			tooltip = "Automatically normalize spaces at the end of sentences.",
+			getFunc = function()
+                           return self.sv.enabled
+                        end,
+			setFunc = function(value)
+                           self.sv.enabled = value
+                           if (value) then
+                              self:HookDialogInteraction()
+                           end
+                        end,
 			width = "full",
 		},
+                {
+                        type = "checkbox",
+                        name = "Use two spaces, not one, between sentences?",
+                        tooltip = "Use two spaces between sentences, or only one?",
+                        getFunc = function()
+                           return self.sv.twoSpaces
+                        end,
+                        setFunc = function(value)
+                           self.sv.twoSpaces = value
+			   self:SetupSpaces()
+                        end,
+                        width = "full",
+                },
 	}
 
 	LAM:RegisterAddonPanel(self.name, panelData)
@@ -39,47 +70,37 @@ function DialogCorrector:HookDialogInteraction()
 	if (self.hasEnabled) then return end
 	self.hasEnabled = true
 
-	local dialogCorrectorOriginalSetTextFn = ZO_InteractWindowTargetAreaBodyText.SetText
-
-	ZO_InteractWindowTargetAreaBodyText.SetText = function (self, bodyText)
-		local dialogCorrectorBodyText = bodyText
-		if (INTERACTION_DIALOG_CORRECTOR.sv.enabled) then
-			dialogCorrectorBodyText = string.gsub(dialogCorrectorBodyText, "\.  ", "\. ")
+	local addon = self
+	local original = ZO_InteractWindowTargetAreaBodyText.SetText
+	ZO_InteractWindowTargetAreaBodyText.SetText = function(control, text)
+		if addon.sv.enabled and text and addon.spaces then
+			text = text:gsub("([.?!])  ?", addon.spaces)
 		end
-	    dialogCorrectorOriginalSetTextFn(self, dialogCorrectorBodyText)
+	        return original(control, text)
 	end
 end
 
-function DialogCorrector:DefineColors()
-	self.color = {}
-	self.color.yellow = "|cFFFF00"
-	self.color.lightYellow = "|cFFFFCC"
-	self.color.green = "|c00FF00"
-	self.color.magenta = "|cFF00FF"
-	self.color.red = "|cFF0000"
-	self.color.darkOrange = "|cFFA500"
-	self.color.iconYellow = "|cFFFF33"
-	self.color.iconOrange = "|cFF6600"
-	self.color.grey = "|c626255"
-	self.color.brightOrange = "|cE68A00"
+function DialogCorrector:SetupSpaces()
+	if self.sv.twoSpaces then
+		self.spaces = "%1  "
+	else
+		self.spaces = "%1 "
+	end
 end
 
 function DialogCorrector:Initialize(addonName)
-	self:DefineColors()
-
 	self.hasEnabled = false
-
 	self.name = addonName
 
-	self.sv = {}
-
-	local defaults = {
-		enabled = true
+	self.defaults = {
+		enabled = true,
+		twoSpaces = false,
 	}
 
-	self.sv = ZO_SavedVars:NewAccountWide(self.name.."_SavedVariables", 1, nil, defaults)
+	self.sv = ZO_SavedVars:NewAccountWide(self.name.."_SavedVariables", 1, nil, self.defaults)
 
 	self:SetupOptions(self.name)
+	self:SetupSpaces()
 
 	if (self.sv.enabled) then
 		self:HookDialogInteraction()
@@ -89,7 +110,7 @@ end
 
 INTERACTION_DIALOG_CORRECTOR = DialogCorrector:New()
 
-local function DialogCorrector_Init(eventType, addonName)
+local function DialogCorrector_Init(_, addonName)
 	if addonName ~= "DialogCorrector" then
 		return
 	end
